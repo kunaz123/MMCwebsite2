@@ -1,0 +1,220 @@
+<!-- Paste your HTML here -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MMC Web Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">🔥 MMC Web</div>
+
+    <div class="user-info">
+      {% if user %}
+        <img src="{{ user.profile_pic }}" alt="Profile" class="avatar">
+        <h3>{{ user.username }}</h3>
+        <div class="rank-bar">
+          <div data-score="{{ user.score }}"></div>
+        </div>
+        <p>Score: {{ user.score }}</p>
+        <p>Rank: {{ user.rank }}</p>
+        <p>Kills: {{ user.kills }}</p>
+        <p>Matches: {{ user.matches }}</p>
+      {% else %}
+        <h3>Guest</h3>
+        <p>Login to access your dashboard.</p>
+      {% endif %}
+    </div>
+
+    <nav>
+      <a href="{{ url_for('home') }}">🏠 Home</a>
+      <a href="{{ url_for('home', page='dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('home', page='profile') }}">👤 Profile</a>
+      <a href="{{ url_for('home', page='leaderboard') }}">🏆 Leaderboard</a>
+      <a href="{{ url_for('home', page='contact') }}">✉️ Contact</a>
+      {% if user %}
+        <a href="{{ url_for('logout') }}" class="logout">🚪 Logout</a>
+      {% else %}
+        <a href="{{ url_for('home', page='login') }}">🔑 Login</a>
+        <a href="{{ url_for('home', page='register') }}">📝 Register</a>
+      {% endif %}
+      {% if user and user.is_admin %}
+        <a href="{{ url_for('add_event') }}" class="admin-link">➕ Add Event</a>
+      {% endif %}
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if page == 'home' %}
+      <section class="card hero-card">
+        <h2>Welcome to <span>MMC Web</span></h2>
+        <p>Your personal dashboard for stats, ranks, clans, and events.</p>
+      </section>
+
+      <!-- Events Section -->
+      <section class="card events-card">
+        <h2>🎯 Upcoming Events</h2>
+        {% if events %}
+          <ul class="event-list">
+            {% for event in events %}
+              <li class="event-item">
+                <h3>{{ event.title }}</h3>
+                <p>{{ event.description }}</p>
+                <span class="event-date">📅 {{ event.date }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No upcoming events yet. Stay tuned!</p>
+        {% endif %}
+      </section>
+
+      <!-- Clans Section -->
+      <section class="card clans-card">
+        <h2>⚔️ Clans</h2>
+        {% if clans %}
+          <ul class="clan-list">
+            {% for clan in clans %}
+              <li class="clan-item">
+                <img src="{{ clan.logo }}" alt="Clan Logo" class="clan-logo">
+                <h3>{{ clan.name }}</h3>
+                <p>{{ clan.slogan }}</p>
+                {% if user and user.clan_id != clan.id %}
+                  <a href="{{ url_for('join_clan', clan_id=clan.id) }}" class="btn-join">Join Clan</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No clans yet. Be the first to create one!</p>
+        {% endif %}
+        {% if user %}
+          <a href="{{ url_for('create_clan') }}" class="btn-create">Create Clan</a>
+        {% endif %}
+      </section>
+
+    {% elif page == 'dashboard' %}
+      <section class="card dashboard-card">
+        <h2>Dashboard</h2>
+        {% if user %}
+          <div class="stats">
+            <div class="stat-box"><h4>Score</h4><p>{{ user.score }}</p></div>
+            <div class="stat-box"><h4>Kills</h4><p>{{ user.kills }}</p></div>
+            <div class="stat-box"><h4>Matches</h4><p>{{ user.matches }}</p></div>
+            <div class="stat-box"><h4>Rank</h4><p>{{ user.rank }}</p></div>
+            <div class="stat-box"><h4>Clan</h4><p>{{ user.clan.name if user.clan else "None" }}</p></div>
+          </div>
+        {% else %}
+          <p>Please <a href="{{ url_for('home', page='login') }}">log in</a> to see your dashboard.</p>
+        {% endif %}
+      </section>
+
+    {% elif page == 'profile' and user %}
+      <section class="card profile-card">
+        <h2>Your Profile</h2>
+        <img src="{{ user.profile_pic }}" class="avatar-large">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Rank:</strong> {{ user.rank }}</p>
+
+        <!-- Upload profile pic -->
+        <form action="{{ url_for('upload_profile_pic') }}" method="POST" enctype="multipart/form-data">
+          <input type="file" name="profile_pic" accept="image/*">
+          <button type="submit">Upload Picture</button>
+        </form>
+
+        <!-- Rank selection -->
+        <form action="{{ url_for('update_profile') }}" method="POST">
+          <label for="rank">Choose your rank:</label>
+          <select name="rank" id="rank">
+            {% for r in ["Recruit","Private","Lance Corporal","Corporal","Sergeant","Staff Sergeant","Warrant Officer","Chief Warrant Officer II","Chief Warrant Officer III","Second Lieutenant"] %}
+              <option value="{{ r }}" {% if user.rank==r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit">Update Profile</button>
+        </form>
+      </section>
+
+    {% elif page == 'leaderboard' %}
+      <section class="card leaderboard-card">
+        <h2>Leaderboard</h2>
+        <table>
+          <tr><th>#</th><th>Username</th><th>Score</th></tr>
+          {% for u in users %}
+            <tr class="{{ 'top' if loop.index0 < 3 else '' }}">
+              <td>{{ loop.index }}</td>
+              <td>{{ u.username }}</td>
+              <td>{{ u.score }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </section>
+
+    {% elif page == 'login' %}
+      <section class="card form-card">
+        <h2>Login</h2>
+        <form method="POST">
+          <input type="text" name="username" placeholder="Username" required>
+          <input type="password" name="password" placeholder="Password" required>
+          <button type="submit">Login</button>
+        </form>
+      </section>
+
+    {% elif page == 'register' %}
+      <section class="card form-card">
+        <h2>Register</h2>
+        <form method="POST">
+          <input type="text" name="username" placeholder="Username" required>
+          <input type="email" name="email" placeholder="Email" required>
+          <input type="password" name="password" placeholder="Password" required>
+          <button type="submit">Register</button>
+        </form>
+      </section>
+
+    {% elif page == 'contact' %}
+      <section class="card form-card">
+        <h2>Contact Us</h2>
+        <form method="POST">
+          <input type="text" name="name" placeholder="Your Name" required>
+          <input type="email" name="email" placeholder="Your Email" required>
+          <textarea name="message" placeholder="Your Message" required></textarea>
+          <button type="submit">Send</button>
+        </form>
+         <!-- Community Link -->
+    <p style="margin-top:15px; text-align:center;">
+      Join our community:
+      <a href="https://whatsapp.com/channel/0029VbAlbew96H4To1izIS0I" target="_blank" style="color:#ffcc66; text-shadow:0 0 5px #ff9500;">Community Link</a>
+    </p>
+         <!-- Community Link -->
+    <p style="margin-top:15px; text-align:center;">
+      Join our community:
+      <a href="https://your-community-link.com" target="_blank" style="color:#ffcc66; text-shadow:0 0 5px #ff9500;">Community Link</a>
+    </p>
+      </section>
+
+    {% endif %}
+  </main>
+</div>
+
+<footer>
+  <p>© 2025 MMC Web — All rights reserved</p>
+</footer>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>

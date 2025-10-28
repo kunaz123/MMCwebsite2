@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Clan - MMC Web</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">🔥 MMC Web</div>
+    <div class="user-info">
+      {% if user %}
+        <img src="{{ user.profile_pic }}" alt="Profile" class="avatar">
+        <h3>{{ user.username }}</h3>
+        <p>Rank: {{ user.rank }}</p>
+      {% endif %}
+    </div>
+    <nav>
+      <a href="{{ url_for('home') }}">🏠 Home</a>
+      <a href="{{ url_for('home', page='dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('home', page='profile') }}">👤 Profile</a>
+      <a href="{{ url_for('home', page='leaderboard') }}">🏆 Leaderboard</a>
+      <a href="{{ url_for('home', page='contact') }}">✉️ Contact</a>
+      <a href="{{ url_for('logout') }}" class="logout">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <section class="card form-card">
+      <h2>Create a Clan</h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <div class="flash {{ category }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" enctype="multipart/form-data">
+        <label for="name">Clan Name</label>
+        <input type="text" name="name" id="name" placeholder="Enter clan name" required>
+
+        <label for="slogan">Clan Slogan</label>
+        <input type="text" name="slogan" id="slogan" placeholder="Enter clan slogan (optional)">
+
+        <label for="logo">Clan Logo</label>
+        <input type="file" name="logo" id="logo" accept="image/*">
+
+        <button type="submit" class="btn-primary">Create Clan</button>
+      </form>
+
+      <p><a href="{{ url_for('home', page='dashboard') }}">← Back to Dashboard</a></p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <p>© 2025 MMC Web — All rights reserved</p>
+</footer>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
